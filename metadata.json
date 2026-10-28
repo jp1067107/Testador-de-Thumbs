@@ -1,0 +1,6 @@
+{
+  "name": "ThumbPreview Studio - YouTube Thumbnail & Safe-Zone Tester",
+  "description": "Teste e valide thumbnails e títulos para YouTube com simulação de feeds reais em TV, Computador e Celular, análise de safe areas e modo comparativo de foco.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
