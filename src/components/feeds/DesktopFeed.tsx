@@ -18,6 +18,8 @@ import { SafeZoneOverlay } from '../SafeZoneOverlay';
 
 interface DesktopFeedProps {
   userVideo: VideoData;
+  userVideoB?: VideoData;
+  isCompareActive?: boolean;
   competitors: VideoData[];
   safeSettings: SafeZoneSettings;
   filter: VisualFilter;
@@ -26,6 +28,8 @@ interface DesktopFeedProps {
 
 export const DesktopFeed: React.FC<DesktopFeedProps> = ({
   userVideo,
+  userVideoB,
+  isCompareActive = true,
   competitors,
   safeSettings,
   filter,
@@ -49,15 +53,25 @@ export const DesktopFeed: React.FC<DesktopFeedProps> = ({
       ? 'blur-[3px] transition-all duration-300'
       : '';
 
-  // Intercalamos o vídeo do usuário no feed na posição #2
-  const allGridVideos = [
-    competitors[0],
-    userVideo,
-    competitors[1],
-    competitors[2],
-    competitors[3],
-    competitors[4],
-  ];
+  // Intercalamos Thumb A e Thumb B (substituindo um concorrente de volume)
+  const allGridVideos =
+    isCompareActive && userVideoB
+      ? [
+          competitors[0],
+          userVideo,
+          competitors[1],
+          userVideoB, // Segunda thumbnail ocupa o lugar de um concorrente de volume
+          competitors[2],
+          competitors[3],
+        ]
+      : [
+          competitors[0],
+          userVideo,
+          competitors[1],
+          competitors[2],
+          competitors[3],
+          competitors[4],
+        ];
 
   return (
     <div className="w-full h-full flex flex-col select-none overflow-hidden rounded-xl border border-neutral-700/40 shadow-xl">
@@ -200,7 +214,9 @@ export const DesktopFeed: React.FC<DesktopFeedProps> = ({
           {/* Grid de Vídeos Desktop (2 a 3 colunas) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-8">
             {allGridVideos.map((video, idx) => {
-              const isUser = video.id === userVideo.id;
+              const isUserA = video.id === userVideo.id;
+              const isUserB = userVideoB && video.id === userVideoB.id;
+              const isUser = isUserA || isUserB;
               return (
                 <div
                   key={`${video.id}-${idx}`}
@@ -210,11 +226,20 @@ export const DesktopFeed: React.FC<DesktopFeedProps> = ({
                       : ''
                   }`}
                 >
-                  {isUser && (
+                  {isUserA && (
                     <div className="mb-2 flex items-center justify-between text-xs text-red-500 font-bold px-1">
-                      <span>★ Sua Thumbnail em Teste</span>
+                      <span>★ Thumb A (Principal)</span>
                       <span className="text-[10px] text-neutral-400 font-normal">
-                        Posição #2 do Feed
+                        Posição #{idx + 1}
+                      </span>
+                    </div>
+                  )}
+
+                  {isUserB && (
+                    <div className="mb-2 flex items-center justify-between text-xs text-blue-500 font-bold px-1">
+                      <span>⚡ Thumb B (Comparação)</span>
+                      <span className="text-[10px] text-neutral-400 font-normal">
+                        Posição #{idx + 1}
                       </span>
                     </div>
                   )}
@@ -232,9 +257,9 @@ export const DesktopFeed: React.FC<DesktopFeedProps> = ({
 
                     {isUser ? (
                       <SafeZoneOverlay
-                        duration={userVideo.duration}
-                        isLive={userVideo.isLive}
-                        progressPercent={userVideo.progressPercent}
+                        duration={video.duration}
+                        isLive={video.isLive}
+                        progressPercent={video.progressPercent}
                         settings={safeSettings}
                         device="desktop"
                       />

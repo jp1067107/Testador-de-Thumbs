@@ -1,9 +1,6 @@
 import React, { useRef, useState } from 'react';
 import {
   Upload,
-  Image as ImageIcon,
-  CheckCircle2,
-  AlertTriangle,
   Clock,
   Radio,
   Sliders,
@@ -12,12 +9,18 @@ import {
   Sparkles,
   HardDrive,
   RotateCcw,
+  Layers,
+  Copy,
 } from 'lucide-react';
 import { VideoData, SafeZoneSettings, ThemeMode } from '../types';
 
 interface EditorSidebarProps {
-  video: VideoData;
-  onChangeVideo: (updated: Partial<VideoData>) => void;
+  videoA: VideoData;
+  videoB: VideoData;
+  onChangeVideoA: (updated: Partial<VideoData>) => void;
+  onChangeVideoB: (updated: Partial<VideoData>) => void;
+  isCompareActive: boolean;
+  onToggleCompare: () => void;
   onResetVideo: () => void;
   safeSettings: SafeZoneSettings;
   onChangeSafeSettings: (updated: Partial<SafeZoneSettings>) => void;
@@ -27,8 +30,12 @@ interface EditorSidebarProps {
 }
 
 export const EditorSidebar: React.FC<EditorSidebarProps> = ({
-  video,
-  onChangeVideo,
+  videoA,
+  videoB,
+  onChangeVideoA,
+  onChangeVideoB,
+  isCompareActive,
+  onToggleCompare,
   onResetVideo,
   safeSettings,
   onChangeSafeSettings,
@@ -36,10 +43,14 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
   isOpen,
 }) => {
   const isDark = theme === 'dark';
+  const [activeTab, setActiveTab] = useState<'A' | 'B'>('A');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   if (!isOpen) return null;
+
+  const currentVideo = activeTab === 'A' ? videoA : videoB;
+  const currentOnChange = activeTab === 'A' ? onChangeVideoA : onChangeVideoB;
 
   // Processamento de arquivo de imagem enviado
   const handleFileChange = (file: File) => {
@@ -47,7 +58,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
     const reader = new FileReader();
     reader.onload = (e) => {
       if (e.target?.result) {
-        onChangeVideo({ thumbnailUrl: e.target.result as string });
+        currentOnChange({ thumbnailUrl: e.target.result as string });
       }
     };
     reader.readAsDataURL(file);
@@ -61,11 +72,24 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
     }
   };
 
-  const isTitleTooLong = video.title.length > 55;
+  // Copia os metadados de A para B (título, canal, duração)
+  const handleCopyFromA = () => {
+    onChangeVideoB({
+      title: videoA.title,
+      channelName: videoA.channelName,
+      duration: videoA.duration,
+      isLive: videoA.isLive,
+      progressPercent: videoA.progressPercent,
+    });
+  };
+
+  const isTitleTooLong = currentVideo.title.length > 55;
 
   const bgSidebar = isDark ? 'bg-[#151515]' : 'bg-neutral-50';
   const borderSidebar = isDark ? 'border-[#262626]' : 'border-neutral-200';
-  const inputBg = isDark ? 'bg-[#202020] border-neutral-700 text-white' : 'bg-white border-neutral-300 text-neutral-900';
+  const inputBg = isDark
+    ? 'bg-[#202020] border-neutral-700 text-white'
+    : 'bg-white border-neutral-300 text-neutral-900';
   const textPrimary = isDark ? 'text-white' : 'text-neutral-900';
   const textSecondary = isDark ? 'text-neutral-400' : 'text-neutral-600';
 
@@ -74,13 +98,96 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
       className={`w-full sm:w-80 md:w-88 border-r ${borderSidebar} ${bgSidebar} flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto select-none shrink-0 transition-colors z-20`}
     >
       <div className="p-4 sm:p-5 flex flex-col gap-5">
-        {/* 1. SEÇÃO DE UPLOAD DA THUMBNAIL */}
+        {/* 1. SELETOR DE THUMBNAIL A / B (TESTE COMPARATIVO) */}
         <div>
-          <label className={`text-xs font-bold uppercase tracking-wider ${textSecondary} mb-2 block`}>
-            Thumbnail do Vídeo
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <span className={`text-xs font-bold uppercase tracking-wider ${textSecondary} flex items-center gap-1.5`}>
+              <Layers className="w-3.5 h-3.5 text-red-500" />
+              <span>Comparação de 2 Thumbs</span>
+            </span>
 
-          {/* Dropzone Compacta */}
+            {/* Toggle de ativação da 2ª Thumb no feed */}
+            <button
+              onClick={onToggleCompare}
+              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-colors ${
+                isCompareActive
+                  ? 'bg-red-500/15 border-red-500/50 text-red-500'
+                  : 'bg-neutral-500/10 border-neutral-500/20 text-neutral-400'
+              }`}
+            >
+              {isCompareActive ? '2 Thumbs Ativas' : 'Apenas 1 Thumb'}
+            </button>
+          </div>
+
+          {/* Abas Thumb A vs Thumb B */}
+          <div
+            className={`grid grid-cols-2 p-1 rounded-xl border ${
+              isDark ? 'bg-[#1e1e1e] border-neutral-800' : 'bg-neutral-200/70 border-neutral-300'
+            }`}
+          >
+            <button
+              onClick={() => setActiveTab('A')}
+              className={`py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                activeTab === 'A'
+                  ? 'bg-red-600 text-white shadow-sm'
+                  : isDark
+                  ? 'text-neutral-400 hover:text-white'
+                  : 'text-neutral-600 hover:text-black'
+              }`}
+            >
+              <span>Thumb A</span>
+              <span className="text-[10px] opacity-80">(Principal)</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('B')}
+              className={`py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                activeTab === 'B'
+                  ? 'bg-red-600 text-white shadow-sm'
+                  : isDark
+                  ? 'text-neutral-400 hover:text-white'
+                  : 'text-neutral-600 hover:text-black'
+              }`}
+            >
+              <span>Thumb B</span>
+              <span className="text-[10px] opacity-80">(Comparação)</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 2. UPLOAD DA THUMBNAIL ATUAL (A OU B) */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className={`text-xs font-bold uppercase tracking-wider ${textSecondary}`}>
+              Imagem da Thumb {activeTab}
+            </label>
+            {activeTab === 'B' && (
+              <button
+                type="button"
+                onClick={handleCopyFromA}
+                className="text-[10px] text-neutral-400 hover:text-red-500 flex items-center gap-1 transition-colors"
+                title="Copiar título e dados da Thumb A"
+              >
+                <Copy className="w-2.5 h-2.5" />
+                <span>Copiar dados da A</span>
+              </button>
+            )}
+          </div>
+
+          {/* Miniatura atual da thumb selecionada */}
+          <div className="mb-2.5 relative aspect-video w-full rounded-xl overflow-hidden bg-black border border-neutral-700/60 shadow-sm">
+            <img
+              src={currentVideo.thumbnailUrl}
+              alt={`Preview da Thumb ${activeTab}`}
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+            <span className="absolute top-1.5 left-1.5 bg-black/80 text-white font-bold text-[9px] px-1.5 py-0.5 rounded border border-white/20">
+              Versão {activeTab}
+            </span>
+          </div>
+
+          {/* Dropzone Compacta para carregar nova imagem */}
           <div
             onDragOver={(e) => {
               e.preventDefault();
@@ -89,7 +196,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
+            className={`border-2 border-dashed rounded-xl p-3 text-center cursor-pointer transition-all ${
               isDragging
                 ? 'border-red-500 bg-red-500/10'
                 : isDark
@@ -106,20 +213,20 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
                 if (e.target.files?.[0]) handleFileChange(e.target.files[0]);
               }}
             />
-            <div className="w-9 h-9 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mx-auto mb-2">
-              <Upload className="w-4 h-4" />
+            <div className="w-7 h-7 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mx-auto mb-1">
+              <Upload className="w-3.5 h-3.5" />
             </div>
             <p className={`text-xs font-semibold ${textPrimary}`}>
-              Clique ou arraste sua thumbnail
+              Enviar nova imagem para Thumb {activeTab}
             </p>
             <p className={`text-[10px] ${textSecondary} mt-0.5`}>
-              PNG, JPG, WebP (16:9 recomendado · Cole com Ctrl+V)
+              Arraste ou cole (Ctrl+V)
             </p>
           </div>
 
-          {/* Indicador de Salvamento Automático no Navegador */}
+          {/* Indicador de Salvamento Automático */}
           <div
-            className={`mt-3 flex items-center justify-between text-[11px] px-3 py-2 rounded-xl border ${borderSidebar} ${
+            className={`mt-2.5 flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-xl border ${borderSidebar} ${
               isDark ? 'bg-[#1a1a1a] text-neutral-300' : 'bg-neutral-100/90 text-neutral-600'
             }`}
           >
@@ -139,41 +246,32 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
           </div>
         </div>
 
-        {/* 2. TÍTULO DO VÍDEO & ANÁLISE DE TRUNCAMENTO */}
+        {/* 3. TÍTULO DO VÍDEO & ANÁLISE DE TRUNCAMENTO */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className={`text-xs font-bold uppercase tracking-wider ${textSecondary} flex items-center gap-1`}>
               <Type className="w-3.5 h-3.5" />
-              <span>Título do Vídeo</span>
+              <span>Título (Thumb {activeTab})</span>
             </label>
             <span
               className={`text-[10px] font-mono ${
                 isTitleTooLong ? 'text-amber-500 font-bold' : textSecondary
               }`}
             >
-              {video.title.length}/100
+              {currentVideo.title.length}/100
             </span>
           </div>
 
           <textarea
-            rows={3}
-            value={video.title}
-            onChange={(e) => onChangeVideo({ title: e.target.value })}
-            placeholder="Digite o título do seu vídeo no YouTube..."
+            rows={2}
+            value={currentVideo.title}
+            onChange={(e) => currentOnChange({ title: e.target.value })}
+            placeholder="Digite o título do seu vídeo..."
             className={`w-full p-2.5 rounded-xl text-xs leading-relaxed border resize-none focus:outline-none focus:ring-1 focus:ring-red-500 ${inputBg}`}
           />
-
-          {isTitleTooLong && (
-            <div className="mt-1.5 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-1.5 text-amber-500 text-[11px] leading-tight">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-              <span>
-                <strong>Atenção:</strong> Títulos com mais de 55 caracteres costumam ser cortados com (...) no celular. Deixe as palavras mais fortes no início!
-              </span>
-            </div>
-          )}
         </div>
 
-        {/* 3. DURAÇÃO E BADGE AO VIVO */}
+        {/* 4. DURAÇÃO E BADGE AO VIVO */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={`text-xs font-bold uppercase tracking-wider ${textSecondary} mb-1.5 block flex items-center gap-1`}>
@@ -182,12 +280,12 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
             </label>
             <input
               type="text"
-              value={video.duration}
-              onChange={(e) => onChangeVideo({ duration: e.target.value })}
+              value={currentVideo.duration}
+              onChange={(e) => currentOnChange({ duration: e.target.value })}
               placeholder="ex: 14:20"
-              disabled={video.isLive}
+              disabled={currentVideo.isLive}
               className={`w-full p-2 rounded-xl text-xs font-mono border focus:outline-none focus:ring-1 focus:ring-red-500 ${
-                video.isLive ? 'opacity-40 cursor-not-allowed' : ''
+                currentVideo.isLive ? 'opacity-40 cursor-not-allowed' : ''
               } ${inputBg}`}
             />
           </div>
@@ -198,9 +296,9 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
               <span>Ao Vivo</span>
             </label>
             <button
-              onClick={() => onChangeVideo({ isLive: !video.isLive })}
+              onClick={() => currentOnChange({ isLive: !currentVideo.isLive })}
               className={`w-full p-2 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all ${
-                video.isLive
+                currentVideo.isLive
                   ? 'bg-red-600 text-white border-red-500 shadow-sm'
                   : isDark
                   ? 'bg-[#202020] border-neutral-700 text-neutral-400 hover:text-white'
@@ -209,15 +307,15 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
             >
               <span
                 className={`w-2 h-2 rounded-full ${
-                  video.isLive ? 'bg-white animate-pulse' : 'bg-neutral-500'
+                  currentVideo.isLive ? 'bg-white animate-pulse' : 'bg-neutral-500'
                 }`}
               />
-              <span>{video.isLive ? 'Transmissão' : 'Vídeo Normal'}</span>
+              <span>{currentVideo.isLive ? 'Ao Vivo' : 'Normal'}</span>
             </button>
           </div>
         </div>
 
-        {/* 4. CANAL & METADADOS */}
+        {/* 5. NOME DO CANAL */}
         <div>
           <label className={`text-xs font-bold uppercase tracking-wider ${textSecondary} mb-1.5 block flex items-center gap-1`}>
             <User className="w-3.5 h-3.5" />
@@ -225,42 +323,43 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
           </label>
           <input
             type="text"
-            value={video.channelName}
-            onChange={(e) => onChangeVideo({ channelName: e.target.value })}
+            value={currentVideo.channelName}
+            onChange={(e) => {
+              // Atualiza em ambos para praticidade
+              onChangeVideoA({ channelName: e.target.value });
+              onChangeVideoB({ channelName: e.target.value });
+            }}
             placeholder="Nome do seu canal"
             className={`w-full p-2 rounded-xl text-xs border focus:outline-none focus:ring-1 focus:ring-red-500 ${inputBg}`}
           />
         </div>
 
-        {/* 5. BARRA DE REPRODUÇÃO SIMULADA (PROGRESS BAR) */}
+        {/* 6. BARRA DE REPRODUÇÃO */}
         <div>
-          <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center justify-between mb-1">
             <label className={`text-xs font-bold uppercase tracking-wider ${textSecondary} flex items-center gap-1`}>
               <Sliders className="w-3 h-3" />
-              <span>Barra de Progresso</span>
+              <span>Barra de Reprodução</span>
             </label>
             <span className={`text-[10px] font-mono ${textSecondary}`}>
-              {video.progressPercent || 0}%
+              {currentVideo.progressPercent || 0}%
             </span>
           </div>
           <input
             type="range"
             min="0"
             max="100"
-            value={video.progressPercent || 0}
+            value={currentVideo.progressPercent || 0}
             onChange={(e) =>
-              onChangeVideo({ progressPercent: Number(e.target.value) })
+              currentOnChange({ progressPercent: Number(e.target.value) })
             }
             className="w-full accent-red-600 cursor-pointer"
           />
-          <span className={`text-[10px] ${textSecondary} block mt-0.5`}>
-            Linha vermelha que indica parte do vídeo já assistida pelo usuário
-          </span>
         </div>
 
-        {/* 6. SAFE ZONE CONTROLES DETALHADOS */}
-        <div className={`p-3.5 rounded-xl border ${borderSidebar} ${isDark ? 'bg-[#1a1a1a]' : 'bg-neutral-100/70'}`}>
-          <div className="flex items-center gap-1.5 mb-2.5">
+        {/* 7. SAFE ZONE CONTROLES DETALHADOS */}
+        <div className={`p-3 rounded-xl border ${borderSidebar} ${isDark ? 'bg-[#1a1a1a]' : 'bg-neutral-100/70'}`}>
+          <div className="flex items-center gap-1.5 mb-2">
             <Sparkles className="w-3.5 h-3.5 text-red-500" />
             <span className={`text-xs font-bold ${textPrimary}`}>
               Guias de Safe Area
@@ -277,7 +376,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
                 }
                 className="rounded accent-red-600"
               />
-              <span className={textPrimary}>Selo de Duração (Canto Inf. Direito)</span>
+              <span className={textPrimary}>Contorno da Duração (Inferior Direito)</span>
             </label>
 
             <label className="flex items-center gap-2 cursor-pointer text-xs">

@@ -18,6 +18,8 @@ import { SafeZoneOverlay } from '../SafeZoneOverlay';
 
 interface MobileFeedProps {
   userVideo: VideoData;
+  userVideoB?: VideoData;
+  isCompareActive?: boolean;
   competitors: VideoData[];
   safeSettings: SafeZoneSettings;
   filter: VisualFilter;
@@ -26,6 +28,8 @@ interface MobileFeedProps {
 
 export const MobileFeed: React.FC<MobileFeedProps> = ({
   userVideo,
+  userVideoB,
+  isCompareActive = true,
   competitors,
   safeSettings,
   filter,
@@ -122,126 +126,103 @@ export const MobileFeed: React.FC<MobileFeedProps> = ({
 
         {/* Feed Scrollável */}
         <div className="flex-1 overflow-y-auto divide-y divide-transparent">
-          {/* VÍDEO DO USUÁRIO EM TESTE */}
-          <div className="pb-4">
-            {/* Tag sutil de identificação da thumbnail testada */}
-            <div className="px-3 py-1 bg-red-600/10 border-b border-red-500/20 flex items-center justify-between text-[11px] text-red-500 font-medium">
-              <span>Seu Vídeo (Em Teste)</span>
-              {safeSettings.showOverlays && isTitleLong && (
-                <span className="flex items-center gap-1 text-[10px] text-amber-500 font-semibold">
-                  <AlertCircle className="w-3 h-3" /> Título pode truncar
-                </span>
-              )}
-            </div>
+          {[
+            { type: 'userA', video: userVideo, label: '★ Thumb A (Principal)' },
+            { type: 'comp', video: competitors[0] },
+            ...(isCompareActive && userVideoB
+              ? [{ type: 'userB', video: userVideoB, label: '⚡ Thumb B (Comparação)' }]
+              : [{ type: 'comp', video: competitors[1] }]),
+            { type: 'comp', video: competitors[2] },
+          ].map((item, idx) => {
+            const isUser = item.type === 'userA' || item.type === 'userB';
+            const vid = item.video;
+            const isLong = vid.title.length > 55;
 
-            {/* Thumbnail com 16:9 estrito */}
-            <div
-              className={`relative aspect-video w-full overflow-hidden bg-black ${filterClass}`}
-            >
-              <img
-                src={userVideo.thumbnailUrl}
-                alt={userVideo.title}
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-              <SafeZoneOverlay
-                duration={userVideo.duration}
-                isLive={userVideo.isLive}
-                progressPercent={userVideo.progressPercent}
-                settings={safeSettings}
-                device="mobile"
-              />
-            </div>
-
-            {/* Metadados do Vídeo no Mobile */}
-            <div className="px-3 pt-3 flex items-start gap-3">
-              <img
-                src={userVideo.channelAvatar}
-                alt={userVideo.channelName}
-                className="w-9 h-9 rounded-full object-cover shrink-0 mt-0.5 border border-black/10"
-                referrerPolicy="no-referrer"
-              />
-
-              <div className="flex-1 min-w-0 pr-1">
-                <h3
-                  className={`text-sm font-semibold leading-snug line-clamp-2 ${textPrimary} ${
-                    safeSettings.showOverlays && isTitleLong
-                      ? 'bg-amber-500/10 rounded px-1 -mx-1'
-                      : ''
-                  }`}
-                  title={userVideo.title}
-                >
-                  {userVideo.title}
-                </h3>
-                <div
-                  className={`text-[12px] ${textSecondary} mt-0.5 flex items-center flex-wrap gap-1 leading-tight`}
-                >
-                  <span>{userVideo.channelName}</span>
-                  <span>·</span>
-                  <span>{userVideo.views}</span>
-                  <span>·</span>
-                  <span>{userVideo.timeAgo}</span>
-                </div>
-              </div>
-
-              <button
-                className={`p-1 -mr-1 ${textSecondary} hover:${textPrimary}`}
-                aria-label="Opções do vídeo"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* VÍDEO CONCORRENTE 1 NO FEED PARA COMPARAR CONTRASTE */}
-          {competitors.slice(0, 3).map((video) => (
-            <div key={video.id} className="py-3">
-              <div
-                className={`relative aspect-video w-full overflow-hidden bg-black ${filterClass}`}
-              >
-                <img
-                  src={video.thumbnailUrl}
-                  alt={video.title}
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute bottom-2 right-2 bg-black/85 text-white font-medium text-[11px] leading-none px-1.5 py-1 rounded tracking-tight font-mono">
-                  {video.duration}
-                </div>
-              </div>
-
-              <div className="px-3 pt-3 flex items-start gap-3">
-                <img
-                  src={video.channelAvatar}
-                  alt={video.channelName}
-                  className="w-9 h-9 rounded-full object-cover shrink-0 mt-0.5"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="flex-1 min-w-0 pr-1">
-                  <h3
-                    className={`text-sm font-semibold leading-snug line-clamp-2 ${textPrimary}`}
-                  >
-                    {video.title}
-                  </h3>
+            return (
+              <div key={`${vid.id}-${idx}`} className="pb-4">
+                {isUser && (
                   <div
-                    className={`text-[12px] ${textSecondary} mt-0.5 flex items-center flex-wrap gap-1 leading-tight`}
+                    className={`px-3 py-1 flex items-center justify-between text-[11px] font-semibold border-b ${
+                      item.type === 'userA'
+                        ? 'bg-red-600/10 border-red-500/20 text-red-500'
+                        : 'bg-blue-600/10 border-blue-500/20 text-blue-500'
+                    }`}
                   >
-                    <span>{video.channelName}</span>
-                    <span>·</span>
-                    <span>{video.views}</span>
-                    <span>·</span>
-                    <span>{video.timeAgo}</span>
+                    <span>{item.label}</span>
+                    {safeSettings.showOverlays && isLong && (
+                      <span className="flex items-center gap-1 text-[10px] text-amber-500 font-semibold">
+                        <AlertCircle className="w-3 h-3" /> Título pode truncar
+                      </span>
+                    )}
                   </div>
-                </div>
-                <button
-                  className={`p-1 -mr-1 ${textSecondary}`}
-                  aria-label="Opções do vídeo"
+                )}
+
+                {/* Thumbnail com 16:9 */}
+                <div
+                  className={`relative aspect-video w-full overflow-hidden bg-black ${filterClass}`}
                 >
-                  <MoreVertical className="w-4 h-4" />
-                </button>
+                  <img
+                    src={vid.thumbnailUrl}
+                    alt={vid.title}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                  {isUser ? (
+                    <SafeZoneOverlay
+                      duration={vid.duration}
+                      isLive={vid.isLive}
+                      progressPercent={vid.progressPercent}
+                      settings={safeSettings}
+                      device="mobile"
+                    />
+                  ) : (
+                    <div className="absolute bottom-2 right-2 bg-black/85 text-white font-medium text-[11px] leading-none px-1.5 py-1 rounded tracking-tight font-mono">
+                      {vid.duration}
+                    </div>
+                  )}
+                </div>
+
+                {/* Metadados do Vídeo no Mobile */}
+                <div className="px-3 pt-3 flex items-start gap-3">
+                  <img
+                    src={vid.channelAvatar}
+                    alt={vid.channelName}
+                    className="w-9 h-9 rounded-full object-cover shrink-0 mt-0.5 border border-black/10"
+                    referrerPolicy="no-referrer"
+                  />
+
+                  <div className="flex-1 min-w-0 pr-1">
+                    <h3
+                      className={`text-sm font-semibold leading-snug line-clamp-2 ${textPrimary} ${
+                        isUser && safeSettings.showOverlays && isLong
+                          ? 'bg-amber-500/10 rounded px-1 -mx-1'
+                          : ''
+                      }`}
+                      title={vid.title}
+                    >
+                      {vid.title}
+                    </h3>
+                    <div
+                      className={`text-[12px] ${textSecondary} mt-0.5 flex items-center flex-wrap gap-1 leading-tight`}
+                    >
+                      <span>{vid.channelName}</span>
+                      <span>·</span>
+                      <span>{vid.views}</span>
+                      <span>·</span>
+                      <span>{vid.timeAgo}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    className={`p-1 -mr-1 ${textSecondary} hover:${textPrimary}`}
+                    aria-label="Opções do vídeo"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Barra de Navegação Inferior do YouTube Mobile */}

@@ -109,6 +109,20 @@ export const INITIAL_USER_VIDEO: VideoData = {
   progressPercent: 35,
 };
 
+export const INITIAL_USER_VIDEO_B: VideoData = {
+  id: 'user-tested-video-b',
+  title: 'COMO CRIAR THUMBNAILS DE ALTO CTR NO YOUTUBE (O Segredo Revelado)',
+  channelName: 'Seu Canal no YouTube',
+  channelAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=creatorstudio',
+  views: '124 mil visualizações',
+  timeAgo: 'há 3 horas',
+  duration: '15:20',
+  thumbnailUrl: PRESET_THUMBNAILS[1].url,
+  isLive: false,
+  verified: true,
+  progressPercent: 35,
+};
+
 // Vídeos simulados de feed ao redor para criar o ambiente realista do YouTube
 export const FEED_COMPETITOR_VIDEOS: VideoData[] = [
   {

@@ -14,6 +14,8 @@ import { SafeZoneOverlay } from '../SafeZoneOverlay';
 
 interface TvFeedProps {
   userVideo: VideoData;
+  userVideoB?: VideoData;
+  isCompareActive?: boolean;
   competitors: VideoData[];
   safeSettings: SafeZoneSettings;
   filter: VisualFilter;
@@ -22,6 +24,8 @@ interface TvFeedProps {
 
 export const TvFeed: React.FC<TvFeedProps> = ({
   userVideo,
+  userVideoB,
+  isCompareActive = true,
   competitors,
   safeSettings,
   filter,
@@ -146,41 +150,86 @@ export const TvFeed: React.FC<TvFeedProps> = ({
               </div>
             </div>
 
-            {/* VÍDEO CONCORRENTE 1 */}
-            <div className="flex flex-col rounded-2xl p-3 bg-white/5 border border-white/10 opacity-80 hover:opacity-100 transition-opacity">
-              <div className="mb-2 flex items-center justify-between text-xs text-neutral-400">
-                <span className="text-[11px]">{competitors[0].channelName}</span>
-              </div>
-
-              <div
-                className={`relative aspect-video w-full rounded-xl overflow-hidden bg-black ${filterClass}`}
-              >
-                <img
-                  src={competitors[0].thumbnailUrl}
-                  alt={competitors[0].title}
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute bottom-2 right-2 bg-black/85 text-white font-medium text-[11px] leading-none px-2 py-1 rounded font-mono">
-                  {competitors[0].duration}
+            {/* VÍDEO 2: THUMB B (SE ATIVA) OU CONCORRENTE 1 */}
+            {isCompareActive && userVideoB ? (
+              <div className="flex flex-col rounded-2xl p-3 bg-blue-500/5 border-2 border-blue-500/60 shadow-[0_0_20px_rgba(59,130,246,0.15)] transform hover:scale-[1.01] transition-transform">
+                <div className="mb-2 flex items-center justify-between text-xs font-bold text-blue-400">
+                  <span className="bg-blue-600 text-white px-2 py-0.5 rounded text-[10px]">
+                    THUMB B (COMPARAÇÃO)
+                  </span>
+                  <span className="text-[11px] text-neutral-300">
+                    {userVideoB.channelName}
+                  </span>
                 </div>
-              </div>
 
-              <div className="mt-3">
-                <h3
-                  className={`text-base font-semibold leading-snug line-clamp-2 ${textPrimary}`}
-                >
-                  {competitors[0].title}
-                </h3>
                 <div
-                  className={`text-xs ${textSecondary} mt-1.5 flex items-center gap-2`}
+                  className={`relative aspect-video w-full rounded-xl overflow-hidden bg-black ${filterClass}`}
                 >
-                  <span>{competitors[0].views}</span>
-                  <span>·</span>
-                  <span>{competitors[0].timeAgo}</span>
+                  <img
+                    src={userVideoB.thumbnailUrl}
+                    alt={userVideoB.title}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                  <SafeZoneOverlay
+                    duration={userVideoB.duration}
+                    isLive={userVideoB.isLive}
+                    progressPercent={userVideoB.progressPercent}
+                    settings={safeSettings}
+                    device="tv"
+                  />
+                </div>
+
+                <div className="mt-3">
+                  <h3
+                    className={`text-base font-bold leading-snug line-clamp-2 ${textPrimary}`}
+                  >
+                    {userVideoB.title}
+                  </h3>
+                  <div
+                    className={`text-xs ${textSecondary} mt-1.5 flex items-center gap-2`}
+                  >
+                    <span>{userVideoB.views}</span>
+                    <span>·</span>
+                    <span>{userVideoB.timeAgo}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex flex-col rounded-2xl p-3 bg-white/5 border border-white/10 opacity-80 hover:opacity-100 transition-opacity">
+                <div className="mb-2 flex items-center justify-between text-xs text-neutral-400">
+                  <span className="text-[11px]">{competitors[0].channelName}</span>
+                </div>
+
+                <div
+                  className={`relative aspect-video w-full rounded-xl overflow-hidden bg-black ${filterClass}`}
+                >
+                  <img
+                    src={competitors[0].thumbnailUrl}
+                    alt={competitors[0].title}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute bottom-2 right-2 bg-black/85 text-white font-medium text-[11px] leading-none px-2 py-1 rounded font-mono">
+                    {competitors[0].duration}
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <h3
+                    className={`text-base font-semibold leading-snug line-clamp-2 ${textPrimary}`}
+                  >
+                    {competitors[0].title}
+                  </h3>
+                  <div
+                    className={`text-xs ${textSecondary} mt-1.5 flex items-center gap-2`}
+                  >
+                    <span>{competitors[0].views}</span>
+                    <span>·</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* VÍDEO CONCORRENTE 2 */}
             <div className="hidden lg:flex flex-col rounded-2xl p-3 bg-white/5 border border-white/10 opacity-70 hover:opacity-100 transition-opacity">

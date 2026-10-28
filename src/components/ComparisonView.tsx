@@ -8,12 +8,14 @@ import {
   ShieldAlert,
   ShieldCheck,
   Sparkles,
+  Layers,
 } from 'lucide-react';
 import { VideoData, SafeZoneSettings, VisualFilter, ThemeMode, FocalPoint } from '../types';
 import { SafeZoneOverlay } from './SafeZoneOverlay';
 
 interface ComparisonViewProps {
   userVideo: VideoData;
+  userVideoB?: VideoData;
   safeSettings: SafeZoneSettings;
   filter: VisualFilter;
   theme: ThemeMode;
@@ -21,6 +23,7 @@ interface ComparisonViewProps {
 
 export const ComparisonView: React.FC<ComparisonViewProps> = ({
   userVideo,
+  userVideoB,
   safeSettings,
   filter,
   theme,
@@ -28,6 +31,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
   const isDark = theme === 'dark';
   const [focalPoint, setFocalPoint] = useState<FocalPoint>({ x: 50, y: 50 });
   const [isInspecting, setIsInspecting] = useState<boolean>(true);
+  const [selectedThumb, setSelectedThumb] = useState<'A' | 'B'>('A');
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   const bgCard = isDark ? 'bg-[#181818]' : 'bg-white';
@@ -42,6 +46,8 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
       ? 'blur-[3px]'
       : '';
 
+  const activeVideo = selectedThumb === 'B' && userVideoB ? userVideoB : userVideo;
+
   // Manipulador de clique para definir ponto focal
   const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!imageContainerRef.current) return;
@@ -51,29 +57,55 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
     setFocalPoint({ x, y });
   };
 
-  // Verifica se o ponto focal atual está perigosamente perto da área de duração (canto inferior direito)
+  // Verifica se o ponto focal atual está perto da área de duração
   const isFocalNearDanger = focalPoint.x > 68 && focalPoint.y > 68;
 
   return (
     <div className="w-full flex flex-col gap-6 select-none pb-12">
-      {/* 1. SELETOR INTERATIVO DE PONTO FOCAL */}
+      {/* 1. SELETOR INTERATIVO DE PONTO FOCAL & LUPA */}
       <div
         className={`p-4 sm:p-5 rounded-2xl border ${borderCard} ${bgCard} shadow-sm transition-colors`}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-2">
             <Target className="w-5 h-5 text-red-500 shrink-0" />
             <div>
               <h3 className={`text-sm font-bold ${textPrimary}`}>
-                Ponto de Destaque & Inspeção de Foco
+                Inspeção de Ponto Focal & Detalhes
               </h3>
               <p className={`text-xs ${textSecondary}`}>
-                Clique ou toque na imagem para posicionar a mira no elemento principal (rosto, texto ou logo)
+                Clique ou toque na imagem para verificar a legibilidade na Versão {selectedThumb}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Seletor Thumb A / Thumb B para inspeção */}
+            {userVideoB && (
+              <div className="flex items-center p-0.5 rounded-lg border border-neutral-700/60 bg-neutral-800 text-xs">
+                <button
+                  onClick={() => setSelectedThumb('A')}
+                  className={`px-2.5 py-1 rounded-md font-bold text-xs transition-colors ${
+                    selectedThumb === 'A'
+                      ? 'bg-red-600 text-white'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  Thumb A
+                </button>
+                <button
+                  onClick={() => setSelectedThumb('B')}
+                  className={`px-2.5 py-1 rounded-md font-bold text-xs transition-colors ${
+                    selectedThumb === 'B'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  Thumb B
+                </button>
+              </div>
+            )}
+
             <button
               onClick={() => setIsInspecting(!isInspecting)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
@@ -96,19 +128,32 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
             className={`lg:col-span-8 relative aspect-video w-full rounded-xl overflow-hidden bg-black cursor-crosshair shadow-md border ${borderCard} ${filterClass}`}
           >
             <img
-              src={userVideo.thumbnailUrl}
-              alt={userVideo.title}
+              src={activeVideo.thumbnailUrl}
+              alt={activeVideo.title}
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />
 
             <SafeZoneOverlay
-              duration={userVideo.duration}
-              isLive={userVideo.isLive}
-              progressPercent={userVideo.progressPercent}
+              duration={activeVideo.duration}
+              isLive={activeVideo.isLive}
+              progressPercent={activeVideo.progressPercent}
               settings={safeSettings}
               device="compare"
             />
+
+            {/* Badge indicadora de qual thumb está sendo inspecionada */}
+            <div className="absolute top-2 left-2 pointer-events-none">
+              <span
+                className={`text-[10px] font-bold px-2 py-0.5 rounded shadow ${
+                  selectedThumb === 'A'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-blue-600 text-white'
+                }`}
+              >
+                Inspecionando: Thumb {selectedThumb}
+              </span>
+            </div>
 
             {/* Mira do Ponto Focal Limpa */}
             <div
@@ -143,12 +188,12 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
                 )}
               </div>
 
-              {/* Janela de Zoom 2.5x centrada no ponto focal */}
+              {/* Janela de Zoom 2.8x centrada no ponto focal */}
               <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-neutral-700/60 shadow-inner bg-black">
                 <div
                   className="w-full h-full"
                   style={{
-                    backgroundImage: `url(${userVideo.thumbnailUrl})`,
+                    backgroundImage: `url(${activeVideo.thumbnailUrl})`,
                     backgroundPosition: `${focalPoint.x}% ${focalPoint.y}%`,
                     backgroundSize: '280%',
                     backgroundRepeat: 'no-repeat',
@@ -168,27 +213,33 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
 
               <p className={`text-[11px] ${textSecondary} mt-2.5 leading-relaxed`}>
                 {isFocalNearDanger
-                  ? 'Atenção: Seu ponto de destaque está no canto inferior direito, onde o selo de duração (00:00) cobrirá esse detalhe.'
-                  : 'Ótimo posicionamento: Este elemento fica afastado dos selos e controles da interface do YouTube.'}
+                  ? 'Atenção: Seu ponto de destaque está no canto inferior direito, onde o selo de duração cobrirá esse detalhe.'
+                  : 'Posicionamento livre: Este elemento fica afastado dos selos e controles da interface do YouTube.'}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 2. COMPARAÇÃO SIMULTÂNEA DAS 3 TELAS */}
+      {/* 2. COMPARAÇÃO SIMULTÂNEA DAS 2 THUMBS NOS DISPOSITIVOS */}
       <div>
-        <div className="mb-4">
-          <h3 className={`text-base font-bold ${textPrimary}`}>
-            Visualização Comparativa em Escala Real
-          </h3>
-          <p className={`text-xs ${textSecondary}`}>
-            Como a proporção e a compressão visual afetam a percepção do espectador
-          </p>
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h3 className={`text-base font-bold ${textPrimary}`}>
+              Comparação A/B em Cada Dispositivo
+            </h3>
+            <p className={`text-xs ${textSecondary}`}>
+              Avalie o impacto visual e a atratividade da Thumb A vs Thumb B em telas reais
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-medium text-neutral-400">
+            <Layers className="w-4 h-4 text-red-500" />
+            <span>Versão A vs Versão B</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          {/* DISPOSITIVO 1: SMARTPHONE (Aproximadamente 70% das visualizações) */}
+          {/* DISPOSITIVO 1: SMARTPHONE */}
           <div
             className={`p-4 rounded-2xl border ${borderCard} ${bgCard} shadow-sm flex flex-col gap-3`}
           >
@@ -209,39 +260,58 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
               </span>
             </div>
 
-            {/* Thumbnail em escala mobile */}
-            <div
-              className={`relative aspect-video w-full rounded-lg overflow-hidden bg-black shadow ${filterClass}`}
-            >
-              <img
-                src={userVideo.thumbnailUrl}
-                alt={userVideo.title}
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-              <SafeZoneOverlay
-                duration={userVideo.duration}
-                isLive={userVideo.isLive}
-                progressPercent={userVideo.progressPercent}
-                settings={safeSettings}
-                device="mobile"
-              />
+            {/* Thumb A no Mobile */}
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-red-500 block">
+                Thumb A (Principal)
+              </span>
+              <div
+                className={`relative aspect-video w-full rounded-lg overflow-hidden bg-black shadow ${filterClass}`}
+              >
+                <img
+                  src={userVideo.thumbnailUrl}
+                  alt={userVideo.title}
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <SafeZoneOverlay
+                  duration={userVideo.duration}
+                  isLive={userVideo.isLive}
+                  progressPercent={userVideo.progressPercent}
+                  settings={safeSettings}
+                  device="mobile"
+                />
+              </div>
             </div>
 
-            {/* Título no Mobile */}
-            <div>
-              <p
-                className={`text-xs font-semibold leading-snug line-clamp-2 ${textPrimary}`}
-              >
-                {userVideo.title}
-              </p>
-              <p className={`text-[11px] ${textSecondary} mt-1`}>
-                {userVideo.channelName} · {userVideo.views}
-              </p>
-            </div>
+            {/* Thumb B no Mobile (se ativa) */}
+            {userVideoB && (
+              <div className="space-y-1 pt-2 border-t border-neutral-500/10">
+                <span className="text-[10px] font-bold text-blue-500 block">
+                  Thumb B (Comparação)
+                </span>
+                <div
+                  className={`relative aspect-video w-full rounded-lg overflow-hidden bg-black shadow ${filterClass}`}
+                >
+                  <img
+                    src={userVideoB.thumbnailUrl}
+                    alt={userVideoB.title}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                  <SafeZoneOverlay
+                    duration={userVideoB.duration}
+                    isLive={userVideoB.isLive}
+                    progressPercent={userVideoB.progressPercent}
+                    settings={safeSettings}
+                    device="mobile"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* DISPOSITIVO 2: DESKTOP PC */}
+          {/* DISPOSITIVO 2: COMPUTADOR */}
           <div
             className={`p-4 rounded-2xl border ${borderCard} ${bgCard} shadow-sm flex flex-col gap-3`}
           >
@@ -262,36 +332,55 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
               </span>
             </div>
 
-            {/* Thumbnail em escala Desktop */}
-            <div
-              className={`relative aspect-video w-full rounded-lg overflow-hidden bg-black shadow ${filterClass}`}
-            >
-              <img
-                src={userVideo.thumbnailUrl}
-                alt={userVideo.title}
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-              <SafeZoneOverlay
-                duration={userVideo.duration}
-                isLive={userVideo.isLive}
-                progressPercent={userVideo.progressPercent}
-                settings={safeSettings}
-                device="desktop"
-              />
+            {/* Thumb A no Desktop */}
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-red-500 block">
+                Thumb A (Principal)
+              </span>
+              <div
+                className={`relative aspect-video w-full rounded-lg overflow-hidden bg-black shadow ${filterClass}`}
+              >
+                <img
+                  src={userVideo.thumbnailUrl}
+                  alt={userVideo.title}
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <SafeZoneOverlay
+                  duration={userVideo.duration}
+                  isLive={userVideo.isLive}
+                  progressPercent={userVideo.progressPercent}
+                  settings={safeSettings}
+                  device="desktop"
+                />
+              </div>
             </div>
 
-            {/* Título no Desktop */}
-            <div>
-              <p
-                className={`text-xs font-semibold leading-snug line-clamp-2 ${textPrimary}`}
-              >
-                {userVideo.title}
-              </p>
-              <p className={`text-[11px] ${textSecondary} mt-1`}>
-                {userVideo.channelName} · {userVideo.views}
-              </p>
-            </div>
+            {/* Thumb B no Desktop (se ativa) */}
+            {userVideoB && (
+              <div className="space-y-1 pt-2 border-t border-neutral-500/10">
+                <span className="text-[10px] font-bold text-blue-500 block">
+                  Thumb B (Comparação)
+                </span>
+                <div
+                  className={`relative aspect-video w-full rounded-lg overflow-hidden bg-black shadow ${filterClass}`}
+                >
+                  <img
+                    src={userVideoB.thumbnailUrl}
+                    alt={userVideoB.title}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                  <SafeZoneOverlay
+                    duration={userVideoB.duration}
+                    isLive={userVideoB.isLive}
+                    progressPercent={userVideoB.progressPercent}
+                    settings={safeSettings}
+                    device="desktop"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* DISPOSITIVO 3: SMART TV */}
@@ -315,36 +404,55 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
               </span>
             </div>
 
-            {/* Thumbnail em escala TV */}
-            <div
-              className={`relative aspect-video w-full rounded-lg overflow-hidden bg-black shadow ${filterClass}`}
-            >
-              <img
-                src={userVideo.thumbnailUrl}
-                alt={userVideo.title}
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-              <SafeZoneOverlay
-                duration={userVideo.duration}
-                isLive={userVideo.isLive}
-                progressPercent={userVideo.progressPercent}
-                settings={safeSettings}
-                device="tv"
-              />
+            {/* Thumb A na TV */}
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-red-500 block">
+                Thumb A (Principal)
+              </span>
+              <div
+                className={`relative aspect-video w-full rounded-lg overflow-hidden bg-black shadow ${filterClass}`}
+              >
+                <img
+                  src={userVideo.thumbnailUrl}
+                  alt={userVideo.title}
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <SafeZoneOverlay
+                  duration={userVideo.duration}
+                  isLive={userVideo.isLive}
+                  progressPercent={userVideo.progressPercent}
+                  settings={safeSettings}
+                  device="tv"
+                />
+              </div>
             </div>
 
-            {/* Título na TV */}
-            <div>
-              <p
-                className={`text-xs font-bold leading-snug line-clamp-2 ${textPrimary}`}
-              >
-                {userVideo.title}
-              </p>
-              <p className={`text-[11px] ${textSecondary} mt-1`}>
-                {userVideo.channelName} · {userVideo.views}
-              </p>
-            </div>
+            {/* Thumb B na TV (se ativa) */}
+            {userVideoB && (
+              <div className="space-y-1 pt-2 border-t border-neutral-500/10">
+                <span className="text-[10px] font-bold text-blue-500 block">
+                  Thumb B (Comparação)
+                </span>
+                <div
+                  className={`relative aspect-video w-full rounded-lg overflow-hidden bg-black shadow ${filterClass}`}
+                >
+                  <img
+                    src={userVideoB.thumbnailUrl}
+                    alt={userVideoB.title}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                  <SafeZoneOverlay
+                    duration={userVideoB.duration}
+                    isLive={userVideoB.isLive}
+                    progressPercent={userVideoB.progressPercent}
+                    settings={safeSettings}
+                    device="tv"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
