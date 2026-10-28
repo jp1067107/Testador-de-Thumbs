@@ -48,6 +48,44 @@ function createThumbSvg(
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
+// SVGs 9:16 para simular Thumbnails verticais de Shorts com alta definição
+function createShortSvg(
+  bgGradient: [string, string],
+  headline: string,
+  sub: string,
+  accentColor: string,
+  badge: string,
+  emoji: string
+): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1280" width="720" height="1280">
+    <defs>
+      <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="${bgGradient[0]}" />
+        <stop offset="100%" stop-color="${bgGradient[1]}" />
+      </linearGradient>
+      <radialGradient id="glow" cx="50%" cy="38%" r="48%">
+        <stop offset="0%" stop-color="${accentColor}" stop-opacity="0.4" />
+        <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+      </radialGradient>
+    </defs>
+    <rect width="720" height="1280" fill="url(#bg)"/>
+    <rect width="720" height="1280" fill="url(#glow)"/>
+    
+    <!-- Elemento central de destaque -->
+    <circle cx="360" cy="500" r="160" fill="rgba(255,255,255,0.06)" stroke="${accentColor}" stroke-width="6"/>
+    <text x="360" y="560" font-family="system-ui, sans-serif" font-weight="900" font-size="140" fill="#ffffff" text-anchor="middle">${emoji}</text>
+
+    <!-- Tag Categoria Superior (acima dos botões laterais) -->
+    <rect x="250" y="240" width="220" height="54" rx="27" fill="${accentColor}"/>
+    <text x="360" y="276" font-family="system-ui, sans-serif" font-weight="800" font-size="24" fill="#000000" text-anchor="middle" letter-spacing="2">${badge}</text>
+
+    <!-- Título Principal Vertical no Centro Seguro -->
+    <text x="360" y="750" font-family="system-ui, sans-serif" font-weight="900" font-size="62" fill="#ffffff" text-anchor="middle" filter="drop-shadow(0 6px 12px rgba(0,0,0,0.8))">${headline}</text>
+    <text x="360" y="830" font-family="system-ui, sans-serif" font-weight="900" font-size="54" fill="${accentColor}" text-anchor="middle" filter="drop-shadow(0 8px 16px rgba(0,0,0,0.9))">${sub}</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 export const PRESET_THUMBNAILS = [
   {
     id: 'tech',
@@ -191,3 +229,76 @@ export const FEED_COMPETITOR_VIDEOS: VideoData[] = [
     thumbnailUrl: createThumbSvg(['#312e81', '#1e1b4b'], 'COMERCIAIS BIZARROS', 'COMO APROVARAM?', '#818cf8', 'REACT', '🤣'),
   },
 ];
+
+// Dados Iniciais de Shorts (9:16)
+export const INITIAL_SHORTS_VIDEO: VideoData = {
+  id: 'user-short-a',
+  title: 'O ERRO QUE TODO CRIADOR COMETE NO YOUTUBE SHORTS! 🚨',
+  channelName: 'Seu Canal no YouTube',
+  channelAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=creatorstudio',
+  views: '840 mil visualizações',
+  timeAgo: 'há 1 dia',
+  duration: '0:45',
+  thumbnailUrl: createShortSvg(['#3b0764', '#1e053a'], 'O MAIOR ERRO', 'NOS SHORTS!', '#f43f5e', 'DICAS YT', '🔥'),
+  isLive: false,
+  verified: true,
+  progressPercent: 60,
+};
+
+export const INITIAL_SHORTS_VIDEO_B: VideoData = {
+  id: 'user-short-b',
+  title: 'COMO CRESCER NO YOUTUBE SHORTS RÁPIDO EM 2026! 📈',
+  channelName: 'Seu Canal no YouTube',
+  channelAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=creatorstudio',
+  views: '1.2M visualizações',
+  timeAgo: 'há 1 dia',
+  duration: '0:52',
+  thumbnailUrl: createShortSvg(['#064e3b', '#022c22'], 'CRESÇA RÁPIDO', 'EM 2026!', '#34d399', 'ALGORITMO', '🚀'),
+  isLive: false,
+  verified: true,
+  progressPercent: 45,
+};
+
+export const FEED_COMPETITOR_SHORTS: VideoData[] = [
+  {
+    id: 'comp-short-1',
+    title: 'POV: Você comprou o celular mais barato da internet 📱',
+    channelName: 'TecnoLab BR',
+    channelAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=tecnolab',
+    views: '2.4M visualizações',
+    timeAgo: 'há 3 dias',
+    duration: '0:35',
+    thumbnailUrl: createShortSvg(['#1e1b4b', '#312e81'], 'CELULAR DE R$ 90', 'FUNCIONA MESMO?', '#818cf8', 'REVIEW', '📱'),
+  },
+  {
+    id: 'comp-short-2',
+    title: 'A ilusão de ótica que 99% das pessoas erram! 🤯',
+    channelName: 'Curiosidades Máximas',
+    channelAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=curioso',
+    views: '4.8M visualizações',
+    timeAgo: 'há 5 dias',
+    duration: '0:28',
+    thumbnailUrl: createShortSvg(['#701a75', '#4a044e'], 'ILUSÃO DE ÓTICA', 'OLHE BEM!', '#f472b6', 'MISTÉRIO', '👁️'),
+  },
+  {
+    id: 'comp-short-3',
+    title: 'Fazendo o hambúrguer mais crocante do mundo em 1 minuto 🍔',
+    channelName: 'Cozinha Express',
+    channelAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=cozinha',
+    views: '1.9M visualizações',
+    timeAgo: 'há 2 dias',
+    duration: '0:58',
+    thumbnailUrl: createShortSvg(['#78350f', '#451a03'], 'HAMBÚRGUER SUPREMO', 'MUITO QUEIJO', '#fbbf24', 'RECEITA', '🍔'),
+  },
+  {
+    id: 'comp-short-4',
+    title: 'Como escapar de qualquer armadilha no Minecraft Hardcore ⛏️',
+    channelName: 'CraftMaster',
+    channelAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=craft',
+    views: '3.1M visualizações',
+    timeAgo: 'há 1 semana',
+    duration: '0:42',
+    thumbnailUrl: createShortSvg(['#14532d', '#052e16'], 'SOBREVIVÊNCIA', 'HARDCORE!', '#22c55e', 'GAMES', '⚔️'),
+  },
+];
+

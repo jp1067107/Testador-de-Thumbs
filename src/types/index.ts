@@ -1,5 +1,7 @@
 export type DeviceType = 'mobile' | 'desktop' | 'tv' | 'compare';
 
+export type ContentFormat = 'long' | 'shorts';
+
 export type VisualFilter = 'normal' | 'grayscale' | 'blur';
 
 export type ThemeMode = 'dark' | 'light';

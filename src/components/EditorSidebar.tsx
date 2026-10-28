@@ -12,9 +12,10 @@ import {
   Layers,
   Copy,
 } from 'lucide-react';
-import { VideoData, SafeZoneSettings, ThemeMode } from '../types';
+import { VideoData, SafeZoneSettings, ThemeMode, ContentFormat } from '../types';
 
 interface EditorSidebarProps {
+  contentFormat: ContentFormat;
   videoA: VideoData;
   videoB: VideoData;
   onChangeVideoA: (updated: Partial<VideoData>) => void;
@@ -30,6 +31,7 @@ interface EditorSidebarProps {
 }
 
 export const EditorSidebar: React.FC<EditorSidebarProps> = ({
+  contentFormat,
   videoA,
   videoB,
   onChangeVideoA,
@@ -175,7 +177,13 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
           </div>
 
           {/* Miniatura atual da thumb selecionada */}
-          <div className="mb-2.5 relative aspect-video w-full rounded-xl overflow-hidden bg-black border border-neutral-700/60 shadow-sm">
+          <div
+            className={`mb-2.5 relative rounded-xl overflow-hidden bg-black border border-neutral-700/60 shadow-sm ${
+              contentFormat === 'shorts'
+                ? 'aspect-[9/16] max-w-[145px] mx-auto'
+                : 'aspect-video w-full'
+            }`}
+          >
             <img
               src={currentVideo.thumbnailUrl}
               alt={`Preview da Thumb ${activeTab}`}
@@ -183,7 +191,8 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
               referrerPolicy="no-referrer"
             />
             <span className="absolute top-1.5 left-1.5 bg-black/80 text-white font-bold text-[9px] px-1.5 py-0.5 rounded border border-white/20">
-              Versão {activeTab}
+              {contentFormat === 'shorts' ? 'Short ' : 'Versão '}
+              {activeTab}
             </span>
           </div>
 
@@ -217,10 +226,12 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
               <Upload className="w-3.5 h-3.5" />
             </div>
             <p className={`text-xs font-semibold ${textPrimary}`}>
-              Enviar nova imagem para Thumb {activeTab}
+              Enviar {contentFormat === 'shorts' ? 'thumbnail vertical (9:16)' : 'thumbnail (16:9)'} para {activeTab}
             </p>
             <p className={`text-[10px] ${textSecondary} mt-0.5`}>
-              Arraste ou cole (Ctrl+V)
+              {contentFormat === 'shorts'
+                ? '9:16 vertical (ex: 1080x1920) · Arraste ou Cole'
+                : '16:9 horizontal · Arraste ou Cole (Ctrl+V)'}
             </p>
           </div>
 
