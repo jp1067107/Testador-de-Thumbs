@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Upload,
   Clock,
@@ -11,12 +11,8 @@ import {
   RotateCcw,
   Layers,
   Copy,
-  Hash,
-  ChevronDown,
-  Check,
 } from 'lucide-react';
 import { VideoData, SafeZoneSettings, ThemeMode } from '../types';
-import { generateHashtagsFromTitle } from '../utils/hashtagGenerator';
 
 interface EditorSidebarProps {
   videoA: VideoData;
@@ -48,41 +44,13 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
 }) => {
   const isDark = theme === 'dark';
   const [activeTab, setActiveTab] = useState<'A' | 'B'>('A');
-  const [isHashtagsOpen, setIsHashtagsOpen] = useState(false);
-  const [copiedTag, setCopiedTag] = useState<string | null>(null);
-  const [copiedAll, setCopiedAll] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-
-  if (!isOpen) return null;
 
   const currentVideo = activeTab === 'A' ? videoA : videoB;
   const currentOnChange = activeTab === 'A' ? onChangeVideoA : onChangeVideoB;
 
-  const generatedHashtags = useMemo(
-    () => generateHashtagsFromTitle(currentVideo.title),
-    [currentVideo.title]
-  );
-
-  const handleCopySingleHashtag = (tag: string) => {
-    try {
-      navigator.clipboard.writeText(tag);
-      setCopiedTag(tag);
-      setTimeout(() => setCopiedTag(null), 1800);
-    } catch (err) {
-      console.warn('Erro ao copiar hashtag', err);
-    }
-  };
-
-  const handleCopyAllHashtags = () => {
-    try {
-      navigator.clipboard.writeText(generatedHashtags.join(' '));
-      setCopiedAll(true);
-      setTimeout(() => setCopiedAll(false), 2000);
-    } catch (err) {
-      console.warn('Erro ao copiar hashtags', err);
-    }
-  };
+  if (!isOpen) return null;
 
   // Processamento de arquivo de imagem enviado
   const handleFileChange = (file: File) => {
@@ -301,79 +269,6 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
             placeholder="Digite o título do seu vídeo..."
             className={`w-full p-2.5 rounded-xl text-xs leading-relaxed border resize-none focus:outline-none focus:ring-1 focus:ring-red-500 ${inputBg}`}
           />
-
-          {/* Gerador de Hashtags com base no Título */}
-          <div
-            className={`mt-2 p-2.5 rounded-xl border transition-all ${borderSidebar} ${
-              isDark ? 'bg-[#1a1a1a]' : 'bg-neutral-100/80'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setIsHashtagsOpen(!isHashtagsOpen)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-left hover:text-red-500 transition-colors"
-                title="Abrir gerador de hashtags sugeridas"
-              >
-                <Hash className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                <span className={textPrimary}>Gerar Hashtags</span>
-                <span className="text-[10px] text-neutral-400 font-normal">
-                  ({generatedHashtags.length})
-                </span>
-                <ChevronDown
-                  className={`w-3.5 h-3.5 text-neutral-400 transition-transform ${
-                    isHashtagsOpen ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-
-              {isHashtagsOpen && (
-                <button
-                  type="button"
-                  onClick={handleCopyAllHashtags}
-                  className="text-[10px] font-semibold text-red-500 hover:text-red-400 flex items-center gap-1 transition-colors px-1.5 py-0.5 rounded hover:bg-red-500/10"
-                >
-                  {copiedAll ? (
-                    <Check className="w-3 h-3 text-emerald-500" />
-                  ) : (
-                    <Copy className="w-3 h-3" />
-                  )}
-                  <span>{copiedAll ? 'Copiadas!' : 'Copiar Todas'}</span>
-                </button>
-              )}
-            </div>
-
-            {isHashtagsOpen && (
-              <div className="mt-2 pt-2 border-t border-neutral-700/40">
-                <p className={`text-[10px] ${textSecondary} mb-2 leading-tight`}>
-                  Clique em qualquer hashtag para copiá-la ou use &quot;Copiar Todas&quot; para colar no YouTube:
-                </p>
-
-                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto no-scrollbar">
-                  {generatedHashtags.map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => handleCopySingleHashtag(tag)}
-                      className={`text-[11px] font-medium px-2 py-0.5 rounded-lg border transition-all flex items-center gap-1 ${
-                        copiedTag === tag
-                          ? 'bg-emerald-600 text-white border-emerald-500'
-                          : isDark
-                          ? 'bg-[#242424] border-neutral-700 text-blue-400 hover:border-blue-400 hover:bg-[#2a2a2a]'
-                          : 'bg-white border-neutral-300 text-blue-600 hover:border-blue-500 hover:bg-blue-50'
-                      }`}
-                      title="Clique para copiar esta hashtag"
-                    >
-                      <span>{tag}</span>
-                      {copiedTag === tag && (
-                        <Check className="w-2.5 h-2.5 text-white" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* 4. DURAÇÃO E BADGE AO VIVO */}
