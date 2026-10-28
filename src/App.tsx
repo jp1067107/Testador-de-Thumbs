@@ -17,10 +17,14 @@ const STORAGE_KEY = 'thumbpreview_user_data_v1';
 
 const getInitialVideoData = (): VideoData => {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      return { ...INITIAL_USER_VIDEO, ...parsed };
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = window.localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          return { ...INITIAL_USER_VIDEO, ...parsed };
+        }
+      }
     }
   } catch (err) {
     console.warn('Não foi possível ler dados anteriores do localStorage', err);
@@ -48,12 +52,15 @@ export default function App() {
   // Salva automaticamente as informações que a pessoa preenche no navegador
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(userVideo));
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(userVideo));
+      }
     } catch {
-      // Caso a imagem exceda a cota do localStorage, salva os metadados textuais (canal, título, duração)
       try {
         const { thumbnailUrl, ...metadataOnly } = userVideo;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(metadataOnly));
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(metadataOnly));
+        }
       } catch (innerErr) {
         console.warn('Erro ao salvar metadados no localStorage', innerErr);
       }
@@ -96,7 +103,9 @@ export default function App() {
 
   const handleResetVideo = () => {
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem(STORAGE_KEY);
+      }
     } catch (err) {
       console.warn('Erro ao limpar localStorage', err);
     }
